@@ -36,20 +36,27 @@
             var playerHeight = parseFloat($("#player").attr("height"));
             const playerSpeed = 10;
             
-            var ballDirectionX = 1;
-            var ballDirectionY = -1;
+            var ballDirectionX = 0;
+            var ballDirectionY = 0;
             const ballSpeed = 5;
 
+            var gameStarted = false;
             var leftPressed = false;
             var rightPressed = false;
             const LEFT_ARROW = 37;
             const RIGHT_ARROW = 39;
             const UP_ARROW = 38;
             const DOWN_ARROW = 40;
+            const SPACE = 32;
             $(document).on("keydown", (event) => {
                 // alert(`${event.key} keykode: ${event.keyCode}`);
                 if(event.keyCode === RIGHT_ARROW) rightPressed = true;
                 if(event.keyCode === LEFT_ARROW) leftPressed = true;
+                if(!gameStarted && event.keyCode === SPACE){
+                    ballDirectionX = 1;
+                    ballDirectionY = -1;
+                    gameStarted = true;
+                }
             });
             
             $(document).on("keyup", (event) => {
@@ -94,20 +101,20 @@
                 
                 if((ballDirectionY < 0 && ballPosY - ballRadius > 0) || (ballDirectionY >= 0 && ballPosY + ballRadius < svgHeight)) ballPosY += ballDirectionY * ballSpeed;
                 else ballDirectionY = -ballDirectionY;
-    
-                $("#ball").attr("cx", ballPosX);
-                $("#ball").attr("cy", ballPosY);
                 
                 // Player movement
                 if(rightPressed){
-                    if(playerPosX + playerWidth < svgWidth) playerPosX += playerSpeed;
+                    if(playerPosX + playerWidth < svgWidth){
+                        playerPosX += playerSpeed;
+                        if(!gameStarted) ballPosX += playerSpeed;
+                    }
                 }
                 if(leftPressed){
-                    if(playerPosX > 0) playerPosX -= playerSpeed;
+                    if(playerPosX > 0){
+                        playerPosX -= playerSpeed;
+                        if(!gameStarted) ballPosX -= playerSpeed;
+                    }
                 }
-
-                $("#player").attr("x", playerPosX);
-                $("#player").attr("y", playerPosY);
 
                 // Block collision
                 blocks.forEach((block) => {
@@ -145,6 +152,12 @@
                     }else{
                         $(block.rec).attr("style", `fill: ${block.color};`);
                     }
+
+                    $("#ball").attr("cx", ballPosX);
+                    $("#ball").attr("cy", ballPosY);
+                    
+                    $("#player").attr("x", playerPosX);
+                    $("#player").attr("y", playerPosY);
                 });
             }, 16); // 60 FPS
         });
