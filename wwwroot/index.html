@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js" integrity="sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/svg.js/3.1.2/svg.min.js" integrity="sha512-I+rKw3hArzZIHzrkdELbKqrXfkSvw/h0lW/GgB8FThaBVz2e5ZUlSW8kY8v3q6wq37eybIwyufkEZxe4qSlGcg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <title>Breakout</title>
+
+    <style>
+        :root{
+            background-color: black;
+            color: white;
+        }
+    </style>
+
+    <script>
+        function BallRectCollision(x, y, width, height, cx, cy, r){
+            if(x < cx + r && cx - r < x + width && y < cy + r && cy - r < y + height) return true;
+            // if(y < cy && y + height) return true;
+            return false;
+        }
+
+        $(document).ready(() => {
+            var svg = $("#SVGImg");
+            var svgWidth = svg.attr("width");
+            var svgHeight = svg.attr("height");
+            
+            var ballPosX = parseFloat($("#ball").attr("cx"));
+            var ballPosY = parseFloat($("#ball").attr("cy"));
+            var ballRadius = parseFloat($("#ball").attr("r"));
+            
+            var playerPosX = parseFloat($("#player").attr("x"));
+            var playerPosY = parseFloat($("#player").attr("y"));
+            var playerWidth = parseFloat($("#player").attr("width"));
+            var playerHeight = parseFloat($("#player").attr("height"));
+            const playerSpeed = 10;
+            
+            var ballDirectionX = 0.1;
+            var ballDirectionY = 0.1;
+            const ballSpeed = 50;
+
+            var leftPressed = false;
+            var rightPressed = false;
+            const LEFT_ARROW = 37;
+            const RIGHT_ARROW = 39;
+            const UP_ARROW = 38;
+            const DOWN_ARROW = 40;
+            $(document).on("keydown", (event) => {
+                // alert(`${event.key} keykode: ${event.keyCode}`);
+                if(event.keyCode === RIGHT_ARROW) rightPressed = true;
+                if(event.keyCode === LEFT_ARROW) leftPressed = true;
+            });
+            
+            $(document).on("keyup", (event) => {
+                // alert(`${event.key} keykode: ${event.keyCode}`);
+                if(event.keyCode === RIGHT_ARROW) rightPressed = false;
+                if(event.keyCode === LEFT_ARROW) leftPressed = false;
+            });
+
+            // Setup the arena
+            const svgns = "http://www.w3.org/2000/svg";
+            const BLOCK_PADDING = 5;
+            const ROW_NUM = 8;
+            const COLL_NUM = 10;
+            let blocks = [];
+            for(let row = 0; row < ROW_NUM; row++){
+                for(let collum = 0; collum < COLL_NUM; collum++){
+                    let blockWidth = (svgWidth - ((COLL_NUM + 1) * BLOCK_PADDING)) / COLL_NUM;
+                    let blockHeight = 20;
+                    let rec = document.createElementNS(svgns, "rect");
+                    rec.setAttribute("x", BLOCK_PADDING + (blockWidth + BLOCK_PADDING) * collum);
+                    rec.setAttribute("y", BLOCK_PADDING + (blockHeight + BLOCK_PADDING) * row);
+                    rec.setAttribute("width", blockWidth);
+                    rec.setAttribute("height", blockHeight);
+
+                    let color;
+                    if(row == 0 || row == 1) color = "red";
+                    if(row == 2 || row == 3) color = "orange";
+                    if(row == 4 || row == 5) color = "green";
+                    if(row == 6 || row == 7) color = "yellow";
+                    rec.setAttribute("style", `fill: ${color};`);
+                    
+                    svg.append(rec);
+                    blocks.push({rec: rec, color: color});
+                }
+            }
+
+            // Frame update
+            setInterval(() => {
+                // Ball colision with arena walls
+                if((ballDirectionX < 0 && ballPosX - ballRadius > 0) || (ballDirectionX >= 0 && ballPosX + ballRadius < svgWidth)) ballPosX += ballDirectionX * ballSpeed;
+                else ballDirectionX = -ballDirectionX;
+                
+                if((ballDirectionY < 0 && ballPosY - ballRadius > 0) || (ballDirectionY >= 0 && ballPosY + ballRadius < svgHeight)) ballPosY += ballDirectionY * ballSpeed;
+                else ballDirectionY = -ballDirectionY;
+    
+                $("#ball").attr("cx", ballPosX);
+                $("#ball").attr("cy", ballPosY);
+                
+                // Player movement
+                if(rightPressed){
+                    if(playerPosX + playerWidth < svgWidth) playerPosX += playerSpeed;
+                }
+                if(leftPressed){
+                    if(playerPosX > 0) playerPosX -= playerSpeed;
+                }
+
+                $("#player").attr("x", playerPosX);
+                $("#player").attr("y", playerPosY);
+
+                // Block collision
+                blocks.forEach((block) => {
+                    let x = parseFloat($(block.rec).attr("x"));
+                    let y = parseFloat($(block.rec).attr("y"));
+                    let width = parseFloat($(block.rec).attr("width"));
+                    let height = parseFloat($(block.rec).attr("height"));
+                    if(BallRectCollision(x, y, width, height, ballPosX, ballPosY, ballRadius)){
+                        $(block.rec).attr("style", `fill: black;`);
+                    }else{
+                        $(block.rec).attr("style", `fill: ${block.color};`);
+                    }
+                });
+            }, 16); // 60 FPS
+        });
+    </script>
+</head>
+<body>
+    <h1>Breakout</h1>
+    <br>
+    <svg id="SVGImg" width="800" height="600">
+        <rect x="0" y="0" width="800" height="600" style="fill: rgb(30, 30, 30);" />
+        <circle id="ball" cx="400" cy="300" r="10" style="fill: red;" />
+        <rect id="player" x="300" y="550" width="100" height="25" style="fill: green; stroke: black;" />
+    </svg>
+    <div id="test"></div>
+</body>
+</html>
