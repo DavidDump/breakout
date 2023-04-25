@@ -16,6 +16,16 @@
     </style>
 
     <script>
+        function max(val1, val2){
+            if(val1 < val2) return val2;
+            return val1;
+        }
+        
+        function min(val1, val2){
+            if(val1 < val2) return val1;
+            return val2;
+        }
+
         function BallRectCollision(x, y, width, height, cx, cy, r){
             if(x < cx + r && cx - r < x + width && y < cy + r && cy - r < y + height) return true;
             return false;
@@ -68,6 +78,7 @@
             // Setup the arena
             const svgns = "http://www.w3.org/2000/svg";
             const BLOCK_PADDING = 5;
+            const TOP_PADDING = 0;
             const ROW_NUM = 8;
             const COLL_NUM = 10;
             var blocks = [];
@@ -77,7 +88,7 @@
                     let blockHeight = 20;
                     let rec = document.createElementNS(svgns, "rect");
                     rec.setAttribute("x", BLOCK_PADDING + (blockWidth + BLOCK_PADDING) * collum);
-                    rec.setAttribute("y", BLOCK_PADDING + (blockHeight + BLOCK_PADDING) * row);
+                    rec.setAttribute("y", TOP_PADDING + BLOCK_PADDING + (blockHeight + BLOCK_PADDING) * row);
                     rec.setAttribute("width", blockWidth);
                     rec.setAttribute("height", blockHeight);
 
@@ -126,29 +137,19 @@
                     if(collision){
                         $(block.rec).attr("style", `fill: black;`);
 
-                        // TODO: collapse if to avoid duplicate cases in in multiple places
-                        if(ballPosX - x < ballPosX - (x + width)){
-                            if(ballPosX - x > ballPosY - y){
-                                // collision point closest to left edge
-                                ballDirectionX = -1;
-                            }else if(ballPosX - x > ballPosY - (y + height)){
-                                // collision point closest to right edge
-                                ballDirectionX = 1;
-                            }else{
-                                // collision point closest to top edge
-                                ballDirectionY = -1;
-                            }
-                        }else{
-                            if(ballPosX - (x + width) > ballPosY - y){
-                                // collision point closest to left edge
-                                ballDirectionX = -1;
-                            }else if(ballPosX - (x + width) > ballPosY - (y + height)){
-                                // collision point closest to right edge
-                                ballDirectionX = 1;
-                            }
-                            // collision point closest to bottom edge
-                            ballDirectionY = 1;
-                        }
+                        let distToTop = max(ballPosY, y) - min(ballPosY, y);
+                        let distToBottom = max(ballPosY, (y + height)) - min(ballPosY, (y + height));
+                        let distToLeft = max(ballPosX, x) - min(ballPosX, x);
+                        let distToRight = max(ballPosX, (x + width)) - min(ballPosX, (x + width));
+                        if(distToBottom < distToTop && distToBottom < distToLeft && distToBottom < distToRight) ballDirectionY = 1;
+                        else if(distToTop < distToBottom && distToTop < distToLeft && distToTop < distToRight) ballDirectionY = -1;
+                        else if(distToLeft < distToBottom && distToLeft < distToTop && distToLeft < distToRight) ballDirectionX = -1;
+                        else if(distToRight < distToBottom && distToRight < distToTop && distToRight < distToLeft) ballDirectionX = 1;
+
+                        // Destroying blocks
+                        $(block.rec).remove();
+                        let index = blocks.indexOf(block);
+                        if(index > -1) blocks.splice(index, 1);
                     }else{
                         $(block.rec).attr("style", `fill: ${block.color};`);
                     }
@@ -170,6 +171,7 @@
     <svg id="SVGImg" width="800" height="600">
         <rect x="0" y="0" width="800" height="600" style="fill: rgb(30, 30, 30);" />
         <circle id="ball" cx="400" cy="540" r="10" style="fill: red;" />
+        <!-- <circle id="ball" cx="600" cy="100" r="10" style="fill: red;" /> -->
         <rect id="player" x="350" y="550" width="100" height="25" style="fill: green; stroke: black;" />
     </svg>
     <div id="test"></div>
