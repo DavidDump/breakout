@@ -153,12 +153,13 @@
                         $(block.rec).attr("style", `fill: ${block.color};`);
                     }
 
-                    $("#ball").attr("cx", ballPosX);
-                    $("#ball").attr("cy", ballPosY);
-                    
-                    $("#player").attr("x", playerPosX);
-                    $("#player").attr("y", playerPosY);
                 });
+                
+                $("#ball").attr("cx", ballPosX);
+                $("#ball").attr("cy", ballPosY);
+                
+                $("#player").attr("x", playerPosX);
+                $("#player").attr("y", playerPosY);
             }, 16); // 60 FPS
         });
     </script>
