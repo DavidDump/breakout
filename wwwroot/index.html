@@ -51,6 +51,8 @@
         }
 
         $(document).ready(() => {
+            var score = 0;
+
             var svg = $("#SVGImg");
             var svgWidth = svg.attr("width");
             var svgHeight = svg.attr("height");
@@ -77,6 +79,7 @@
             const UP_ARROW = 38;
             const DOWN_ARROW = 40;
             const SPACE = 32;
+            const KEY_P = 80;
             $(document).on("keydown", (event) => {
                 // alert(`${event.key} keykode: ${event.keyCode}`);
                 if(event.keyCode === RIGHT_ARROW) rightPressed = true;
@@ -86,6 +89,7 @@
                     ballDirectionY = -1;
                     gameStarted = true;
                 }
+                if(event.keyCode === KEY_P) blocks.splice(0, blocks.length);
             });
             
             $(document).on("keyup", (event) => {
@@ -105,31 +109,37 @@
                 for(let collum = 0; collum < COLL_NUM; collum++){
                     let blockWidth = (svgWidth - ((COLL_NUM + 1) * BLOCK_PADDING)) / COLL_NUM;
                     let blockHeight = 20;
-                    let rec = document.createElementNS(svgns, "rect");
-                    rec.setAttribute("x", BLOCK_PADDING + (blockWidth + BLOCK_PADDING) * collum);
-                    rec.setAttribute("y", TOP_PADDING + BLOCK_PADDING + (blockHeight + BLOCK_PADDING) * row);
-                    rec.setAttribute("width", blockWidth);
-                    rec.setAttribute("height", blockHeight);
-
-                    let color = "yellow";
-                    if(row == 0 || row == 1) color = "red";
-                    if(row == 2 || row == 3) color = "orange";
-                    if(row == 4 || row == 5) color = "green";
-                    if(row == 6 || row == 7) color = "yellow";
-                    rec.setAttribute("style", `fill: ${color};`);
+                    let block = {};
                     
-                    svg.append(rec);
-                    blocks.push({rec: rec, color: color});
+                    if(row == 0 || row == 1) block = {color: "red", points: 7};
+                    else if(row == 2 || row == 3) block = {color: "orange", points: 5};
+                    else if(row == 4 || row == 5) block = {color: "green", points: 3};
+                    else if(row == 6 || row == 7) block = {color: "yellow", points: 1};
+                    else block = {color: "yellow", points: 1};
+
+                    block.rec = document.createElementNS(svgns, "rect");
+                    block.rec.setAttribute("x", BLOCK_PADDING + (blockWidth + BLOCK_PADDING) * collum);
+                    block.rec.setAttribute("y", TOP_PADDING + BLOCK_PADDING + (blockHeight + BLOCK_PADDING) * row);
+                    block.rec.setAttribute("width", blockWidth);
+                    block.rec.setAttribute("height", blockHeight);
+                    block.rec.setAttribute("style", `fill: ${block.color};`);
+                    
+                    svg.append(block.rec);
+                    blocks.push(block);
                 }
             }
 
             // Frame update
-            setInterval(() => {
-                // Ball colision with arena walls
-                if((ballDirectionX < 0 && ballPosX - ballRadius > 0) || (ballDirectionX >= 0 && ballPosX + ballRadius < svgWidth)) ballPosX += ballDirectionX * ballSpeed;
+            var gameLoop = setInterval(() => {
+                // Ball collision with arena walls
+                const arenaX = 0;
+                const arenaY = 0;
+                const arenaWidth = svgWidth;
+                const arenaHeight = svgHeight;
+                if((ballDirectionX < 0 && ballPosX - ballRadius > arenaX) || (ballDirectionX > 0 && ballPosX + ballRadius < arenaWidth)) ballPosX += ballDirectionX * ballSpeed;
                 else ballDirectionX = -ballDirectionX;
                 
-                if((ballDirectionY < 0 && ballPosY - ballRadius > 0) || (ballDirectionY >= 0 && ballPosY + ballRadius < svgHeight)) ballPosY += ballDirectionY * ballSpeed;
+                if((ballDirectionY < 0 && ballPosY - ballRadius > arenaY) || (ballDirectionY > 0 && ballPosY + ballRadius < arenaHeight)) ballPosY += ballDirectionY * ballSpeed;
                 else ballDirectionY = -ballDirectionY;
                 
                 // Player movement
@@ -154,7 +164,6 @@
                     else if(collision == COLLISION_DIR_TOP) ballDirectionY = -1;
                     else if(collision == COLLISION_DIR_LEFT) ballDirectionX = -1;
                     else if(collision == COLLISION_DIR_RIGHT) ballDirectionX = 1;
-                    else if(collision == COLLISION_DIR_UNDEFINED) alert("undef");
                 }
 
                 // Block collision
@@ -164,24 +173,26 @@
                     let width = parseFloat($(block.rec).attr("width"));
                     let height = parseFloat($(block.rec).attr("height"));
                     if((collision = BallRectCollision(x, y, width, height, ballPosX, ballPosY, ballRadius)) !== COLLISION_DIR_NONE){
-                        $(block.rec).attr("style", `fill: black;`);
-
                         // TODO: dont hardcode 1 and -1, but derive the values from dirX and dirY
                         if(collision == COLLISION_DIR_BOTTOM) ballDirectionY = 1;
                         else if(collision == COLLISION_DIR_TOP) ballDirectionY = -1;
                         else if(collision == COLLISION_DIR_LEFT) ballDirectionX = -1;
                         else if(collision == COLLISION_DIR_RIGHT) ballDirectionX = 1;
-                        else if(collision == COLLISION_DIR_UNDEFINED) alert("undef");
 
                         // Destroying blocks
+                        score += block.points;
                         $(block.rec).remove();
                         let index = blocks.indexOf(block);
                         if(index > -1) blocks.splice(index, 1);
-                    }else{
-                        $(block.rec).attr("style", `fill: ${block.color};`);
                     }
-
                 });
+
+                // Win game
+                if(blocks.length == 0){
+                    clearInterval(gameLoop);
+                }
+
+                $("#score").text(`Score: ${score}`);
                 
                 $("#ball").attr("cx", ballPosX);
                 $("#ball").attr("cy", ballPosY);
@@ -194,6 +205,7 @@
 </head>
 <body>
     <h1>Breakout</h1>
+    <div id="score"></div>
     <br>
     <svg id="SVGImg" width="800" height="600">
         <rect x="0" y="0" width="800" height="600" style="fill: rgb(30, 30, 30);" />
