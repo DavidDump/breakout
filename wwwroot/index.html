@@ -26,9 +26,28 @@
             return val2;
         }
 
+        const COLLISION_DIR_NONE = 0;
+        const COLLISION_DIR_TOP = 1;
+        const COLLISION_DIR_BOTTOM = 2;
+        const COLLISION_DIR_LEFT = 3;
+        const COLLISION_DIR_RIGHT = 4;
+        const COLLISION_DIR_UNDEFINED = 5;
         function BallRectCollision(x, y, width, height, cx, cy, r){
-            if(x < cx + r && cx - r < x + width && y < cy + r && cy - r < y + height) return true;
-            return false;
+            if(x < cx + r && cx - r < x + width && y < cy + r && cy - r < y + height){
+                let distToTop = max(cy, y) - min(cy, y);
+                let distToBottom = max(cy, (y + height)) - min(cy, (y + height));
+                let distToLeft = max(cx, x) - min(cx, x);
+                let distToRight = max(cx, (x + width)) - min(cx, (x + width));
+                
+                if(distToBottom < distToTop && distToBottom < distToLeft && distToBottom < distToRight) return COLLISION_DIR_BOTTOM;
+                else if(distToTop < distToBottom && distToTop < distToLeft && distToTop < distToRight) return COLLISION_DIR_TOP;
+                else if(distToLeft < distToBottom && distToLeft < distToTop && distToLeft < distToRight) return COLLISION_DIR_LEFT;
+                else if(distToRight < distToBottom && distToRight < distToTop && distToRight < distToLeft) return COLLISION_DIR_RIGHT;
+                // TODO: undefined occures when ball position and rect position are the same
+                // so the resulting distance is 0 on one axis
+                else return COLLISION_DIR_UNDEFINED;
+            }
+            return COLLISION_DIR_NONE;
         }
 
         $(document).ready(() => {
@@ -127,24 +146,32 @@
                     }
                 }
 
+                // Player collision
+                let collision;
+                if((collision = BallRectCollision(playerPosX, playerPosY, playerWidth, playerHeight, ballPosX, ballPosY, ballRadius)) !== COLLISION_DIR_NONE){
+                    // TODO: dont hardcode 1 and -1, but derive the values from dirX and dirY
+                    if(collision == COLLISION_DIR_BOTTOM) ballDirectionY = 1;
+                    else if(collision == COLLISION_DIR_TOP) ballDirectionY = -1;
+                    else if(collision == COLLISION_DIR_LEFT) ballDirectionX = -1;
+                    else if(collision == COLLISION_DIR_RIGHT) ballDirectionX = 1;
+                    else if(collision == COLLISION_DIR_UNDEFINED) alert("undef");
+                }
+
                 // Block collision
                 blocks.forEach((block) => {
                     let x = parseFloat($(block.rec).attr("x"));
                     let y = parseFloat($(block.rec).attr("y"));
                     let width = parseFloat($(block.rec).attr("width"));
                     let height = parseFloat($(block.rec).attr("height"));
-                    let collision = BallRectCollision(x, y, width, height, ballPosX, ballPosY, ballRadius);
-                    if(collision){
+                    if((collision = BallRectCollision(x, y, width, height, ballPosX, ballPosY, ballRadius)) !== COLLISION_DIR_NONE){
                         $(block.rec).attr("style", `fill: black;`);
 
-                        let distToTop = max(ballPosY, y) - min(ballPosY, y);
-                        let distToBottom = max(ballPosY, (y + height)) - min(ballPosY, (y + height));
-                        let distToLeft = max(ballPosX, x) - min(ballPosX, x);
-                        let distToRight = max(ballPosX, (x + width)) - min(ballPosX, (x + width));
-                        if(distToBottom < distToTop && distToBottom < distToLeft && distToBottom < distToRight) ballDirectionY = 1;
-                        else if(distToTop < distToBottom && distToTop < distToLeft && distToTop < distToRight) ballDirectionY = -1;
-                        else if(distToLeft < distToBottom && distToLeft < distToTop && distToLeft < distToRight) ballDirectionX = -1;
-                        else if(distToRight < distToBottom && distToRight < distToTop && distToRight < distToLeft) ballDirectionX = 1;
+                        // TODO: dont hardcode 1 and -1, but derive the values from dirX and dirY
+                        if(collision == COLLISION_DIR_BOTTOM) ballDirectionY = 1;
+                        else if(collision == COLLISION_DIR_TOP) ballDirectionY = -1;
+                        else if(collision == COLLISION_DIR_LEFT) ballDirectionX = -1;
+                        else if(collision == COLLISION_DIR_RIGHT) ballDirectionX = 1;
+                        else if(collision == COLLISION_DIR_UNDEFINED) alert("undef");
 
                         // Destroying blocks
                         $(block.rec).remove();
@@ -171,7 +198,7 @@
     <svg id="SVGImg" width="800" height="600">
         <rect x="0" y="0" width="800" height="600" style="fill: rgb(30, 30, 30);" />
         <circle id="ball" cx="400" cy="540" r="10" style="fill: red;" />
-        <!-- <circle id="ball" cx="600" cy="100" r="10" style="fill: red;" /> -->
+        <!-- <circle id="ball" cx="100" cy="100" r="10" style="fill: red;" /> -->
         <rect id="player" x="350" y="550" width="100" height="25" style="fill: green; stroke: black;" />
     </svg>
     <div id="test"></div>
