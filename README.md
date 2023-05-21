@@ -1,6 +1,7 @@
 ## Tobbi feladat:
 - [weather app](https://github.com/daviddump/weather)
 - [bouncyball](https://github.com/daviddump/bouncy-ball)
+- [house](https://github.com/daviddump/house)
 
 ## Feladat:
 |Feladatrész | Részpontszám |
