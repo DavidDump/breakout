@@ -199,11 +199,18 @@
             // Frame update
             function gameUpdate() {
                 // Ball collision with arena walls
-                if((ballDirectionX < 0 && ballPosX - ballRadius > arenaX) || (ballDirectionX > 0 && ballPosX + ballRadius < arenaWidth)) ballPosX += ballDirectionX * ballSpeed;
-                else ballDirectionX = -ballDirectionX;
+                if((ballDirectionX < 0 && ballPosX - ballRadius > arenaX) || (ballDirectionX > 0 && ballPosX + ballRadius < arenaWidth)){
+                    ballPosX += ballDirectionX * ballSpeed;
+                }else{
+                    ballDirectionX = -ballDirectionX;
+                }
                 
-                if((ballDirectionY < 0 && ballPosY - ballRadius > arenaY) || (ballDirectionY > 0 && ballPosY + ballRadius < arenaHeight)) ballPosY += ballDirectionY * ballSpeed;
-                else ballDirectionY = -ballDirectionY;
+                if((ballDirectionY < 0 && ballPosY - ballRadius > arenaY) || (ballDirectionY > 0 && ballPosY + ballRadius < arenaHeight)){
+                    ballPosY += ballDirectionY * ballSpeed;
+                }else{
+                    ballDirectionY = -ballDirectionY;
+                    if(ballDirectionY != 0) gameState = STATE_GAME_OVER;
+                }
                 
                 // Player movement
                 if(rightPressed){
@@ -251,11 +258,12 @@
                 });
 
                 // Win game
-                if(blocks.length == 0){
+                if(blocks.length == 0) gameState = STATE_GAME_OVER;
+
+                if(gameState === STATE_GAME_OVER){
                     clearInterval(gameLoop);
                     infoText.push(CreateText(250, 200, `You won! Score: ${score}`));
                     infoText.push(CreateText(180, 250, `Press space to play again.`));
-                    gameState = STATE_GAME_OVER;
                     if(!highScore || score > highScore) highScore = score;
                     localStorage.setItem("breakout_highScore", highScore);
                 }
